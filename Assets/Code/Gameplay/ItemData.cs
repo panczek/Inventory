@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Code.Gameplay
 {
-    [CreateAssetMenu(fileName = "New Inventory Item", menuName = "Scriptable/Inventory Item")]
+    [CreateAssetMenu( fileName = "New Inventory Item", menuName = "Scriptable/Inventory Item" )]
     public class ItemData : ScriptableObject
     {
         [SerializeField] private int2 size;
@@ -16,6 +16,11 @@ namespace Code.Gameplay
 
         [SerializeField] private GameObject prefab;
         [SerializeField] private Sprite icon;
+
+        public int2 Size => size;
+        public Sprite Icon => icon;
+        public string Name => name;
+        public string Description => description;
+        public float Value => value;
     }
 }
-

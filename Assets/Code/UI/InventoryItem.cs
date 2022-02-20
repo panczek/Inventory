@@ -9,6 +9,5 @@ namespace Code.UI
     {
         public ItemData Item;
         public int2 PlaceOnGrid;
-
     }
 }
