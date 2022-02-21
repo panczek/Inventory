@@ -183,6 +183,16 @@ public struct int2 {
 		return new Vector2( v / a.x, v / a.y );
 	}
 
+    public static bool operator ==( int2 a, int2 b )
+    {
+        return a.x == b.x && a.y == b.y;
+    }
+    
+    public static bool operator !=( int2 a, int2 b )
+    {
+        return a.x != b.x || a.y != b.y;
+    }
+    
 	// Component index access
 
 	public int this[int i] {
