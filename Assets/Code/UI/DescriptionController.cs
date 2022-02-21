@@ -1,5 +1,4 @@
-﻿using System;
-using Code.Gameplay;
+﻿using Code.Gameplay;
 using TMPro;
 using UnityEngine;
 
@@ -9,11 +8,14 @@ namespace Code.UI
     {
         [SerializeField] private GameObject descriptionBox;
         [SerializeField] private Vector3 boxOffset;
+        [SerializeField] private bool showDuringDrag;
         [SerializeField] private TextMeshProUGUI nameText;
         [SerializeField] private TextMeshProUGUI descriptionText;
         [SerializeField] private TextMeshProUGUI valueText;
 
         private bool isActive;
+
+        public bool ShowDuringDrag => showDuringDrag;
 
         private void Update()
         {

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using Code.Gameplay;
-using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.UI;
 using Zenject;
@@ -21,45 +20,27 @@ namespace Code.UI
         [SerializeField] private Vector2 gridImageSize;
 
         private Dictionary<int2, GridTile> gridTiles;
+        private List<GridTile> currentlySelectedTiles;
+        private DiContainer _container;
+        private bool showDebugs;
 
+        public bool GridTileIsFree( GridTile tile ) => tile.IsFree;
+        public bool GridTileDuringSelection( GridTile tile ) => tile.IsInSelection || currentlySelectedTiles.Contains( tile ) || tile.IsFree;
+        public bool GridTIleIsInCurrentlySelected( GridTile tile ) => currentlySelectedTiles.Contains( tile );
+        
         [Inject]
         private void Inject( DiContainer container )
         {
             _container = container;
         }
-
-        private DiContainer _container;
-
+        
         private void Start()
         {
             CreateInventory();
+            foreach( var tile in gridTiles.Values )
+                tile.ShowDebugs = false;
         }
-
-        public void CreateInventory()
-        {
-            gridTiles = new Dictionary<int2, GridTile>();
-            gridLayout.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-            gridLayout.constraintCount = inventorySIze.x;
-            gridLayout.spacing = new Vector2( spawnSpacing, spawnSpacing );
-            gridLayout.cellSize = gridTileSize;
-
-            for( int h = 0; h < inventorySIze.y; h++ )
-            {
-                for( int w = 0; w < inventorySIze.x; w++ )
-                {
-                    int2 pos = new int2( w, h );
-                    var gobNew = Instantiate( gridPrefab, inventoryRoot.transform );
-                    gobNew.hideFlags = HideFlags.DontSave;
-
-                    gobNew.TryGetComponent( out GridTile gridTile );
-                    gridTile.Init( pos );
-                    _container.Inject( gridTile );
-                    //gobNew.transform.localPosition = new Vector3(spawnSpacing.x * w, spawnSpacing.y * h, 0f);
-                    gridTiles.Add( pos, gridTile );
-                }
-            }
-        }
-
+        
         public Vector2 GetImagePos( int2 size )
         {
             Vector2 imagePos = Vector2.zero;
@@ -99,23 +80,29 @@ namespace Code.UI
             return imageSize;
         }
 
-        public void PutItemOnGrid( GridTile tile, ItemData itemData )
+        public bool PutItemOnGrid( GridTile tile, ItemData itemData, Func<GridTile, bool> tileCheck  )
         {
-            if( !WillFit( tile.MyPos, itemData.Size, out var possiblePositions ) )
-                return;
+            if( !WillFit( tile.MyPos, itemData.Size, out var possiblePositions, tileCheck ) )
+                return false;
 
             List<GridTile> childTiles = new List<GridTile>();
 
-            foreach( var position in possiblePositions )
+            foreach( var position in possiblePositions.Where( p => p != tile.MyPos ) )
             {
                 var childTile = gridTiles[position];
                 childTile.SetStateOccupiedChild( tile );
                 childTiles.Add( childTile );
             }
-
+            
             tile.SetStateOccupiedParent( itemData, childTiles );
+            return true;
         }
 
+        public void SetCurrentlySelectedItem( List<GridTile> newSelectedTiles )
+        {
+            currentlySelectedTiles = newSelectedTiles;
+        }
+        
         public bool FindFirstValidPosition( int2 size, out GridTile validTile )
         {
             if( size.x == 1 && size.y == 1 )
@@ -126,7 +113,7 @@ namespace Code.UI
 
             foreach( var tile in gridTiles.Where( g => g.Value.IsFree ) )
             {
-                if( WillFit( tile.Key, size, out _ ) )
+                if( WillFit( tile.Key, size, out _, GridTileIsFree ) )
                 {
                     validTile = tile.Value;
                     return true;
@@ -135,18 +122,6 @@ namespace Code.UI
 
             validTile = null;
             return false;
-
-            bool IsFreeBelow( int2 pos )
-            {
-                var newPos = pos + new int2( 0, 1 );
-                return IsValidTile( newPos ) && gridTiles[pos].IsFree;
-            }
-
-            bool IsFreeOnRight( int2 pos )
-            {
-                var newPos = pos + new int2( 1, 0 );
-                return IsValidTile( newPos ) && gridTiles[pos].IsFree;
-            }
         }
 
         public List<GridTile> GetTilesFromPos( List<int2> positions )
@@ -160,8 +135,8 @@ namespace Code.UI
 
             return tileList;
         }
-
-        public bool WillFit( int2 pos, int2 size, out List<int2> possiblePositions, bool doChecks = true )
+        
+        public bool WillFit( int2 pos, int2 size, out List<int2> possiblePositions, Func<GridTile, bool> tileCheck, bool doChecks = true )
         {
             var wontFit = false;
             var wontFitNoChecks = false;
@@ -173,7 +148,7 @@ namespace Code.UI
                 do
                 {
                     posToCheck = pos + new int2( x, y );
-                    if( IsValidTile( posToCheck ) && gridTiles[posToCheck].IsFree )
+                    if( IsValidTile( posToCheck ) && tileCheck(gridTiles[posToCheck]) )
                     {
                         x++;
                         possiblePositions.Add( posToCheck );
@@ -198,19 +173,42 @@ namespace Code.UI
             return doChecks ? !wontFit : !wontFitNoChecks;
         }
 
+        public void ToggleDebugs()
+        {
+            showDebugs = !showDebugs;
+
+            foreach( var tile in gridTiles.Values )
+                tile.ShowDebugs = showDebugs;
+        }
+        
+        private void CreateInventory()
+        {
+            gridTiles = new Dictionary<int2, GridTile>();
+            currentlySelectedTiles = new List<GridTile>();
+            gridLayout.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            gridLayout.constraintCount = inventorySIze.x;
+            gridLayout.spacing = new Vector2( spawnSpacing, spawnSpacing );
+            gridLayout.cellSize = gridTileSize;
+
+            for( int h = 0; h < inventorySIze.y; h++ )
+            {
+                for( int w = 0; w < inventorySIze.x; w++ )
+                {
+                    int2 pos = new int2( w, h );
+                    var gobNew = Instantiate( gridPrefab, inventoryRoot.transform );
+                    gobNew.hideFlags = HideFlags.DontSave;
+
+                    gobNew.TryGetComponent( out GridTile gridTile );
+                    gridTile.Init( pos );
+                    _container.Inject( gridTile );
+                    gridTiles.Add( pos, gridTile );
+                }
+            }
+        }
+        
         private bool IsValidTile( int2 pos )
         {
             return pos.x <= inventorySIze.x - 1 && pos.y <= inventorySIze.y - 1;
-        }
-
-        public void ToggleInventory()
-        {
-            inventory.SetActive( !inventory.activeInHierarchy );
-        }
-
-        public void ShowInventory( bool show )
-        {
-            inventory.SetActive( show );
         }
     }
 }

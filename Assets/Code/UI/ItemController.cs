@@ -10,12 +10,10 @@ namespace Code.UI
     {
         [SerializeField] private Image temporaryItem;
         [SerializeField] private RectTransform rectTransform;
-        //private ItemData CurrentItem;
 
         [Inject] private InventoryController inventoryCtrl;
 
-        private GridTile itemOriginTIle;
-        
+        public GridTile ItemOriginTile { get; private set; }
         public ItemData CurrentItem { get; private set; }
 
         private void Update()
@@ -24,7 +22,7 @@ namespace Code.UI
             {
                 temporaryItem.transform.position = Input.mousePosition;
                 if( Input.GetMouseButtonDown( 1 ) )
-                    RemoveTemporaryItem();
+                    RemoveTemporaryItem( false );
             }
         }
 
@@ -32,13 +30,13 @@ namespace Code.UI
         {
             if( CurrentItem )
                 return false;
-            
+
             SetTemporaryItem( newItem );
-            itemOriginTIle = tile;
+            ItemOriginTile = tile;
 
             return true;
         }
-        
+
         public void SetTemporaryItem( ItemData item )
         {
             if( CurrentItem )
@@ -50,16 +48,20 @@ namespace Code.UI
             temporaryItem.gameObject.SetActive( true );
         }
 
-        public void RemoveTemporaryItem()
+        public void RemoveTemporaryItem( bool destroyItem = true )
         {
             CurrentItem = null;
             temporaryItem.gameObject.SetActive( false );
-            if( itemOriginTIle )
-            {
-                itemOriginTIle.SetImageState( GridTile.EImageState.Normal );
-                itemOriginTIle = null;
-            }
+
+            if( !ItemOriginTile )
+                return;
+
+            ItemOriginTile.SetImageState( GridTile.EImageState.Normal );
+            ItemOriginTile.SetItemSelectionMode( false );
+            if( destroyItem )
+                ItemOriginTile.SetStateFree();
+
+            ItemOriginTile = null;
         }
-        
     }
 }

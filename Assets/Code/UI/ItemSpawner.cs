@@ -1,5 +1,4 @@
-﻿using System;
-using Code.Gameplay;
+﻿using Code.Gameplay;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -35,12 +34,10 @@ namespace Code.UI
 
             if( doubleClickTimer > 0f )
             {
-                Debug.Log( "double click" );
-
                 if( inventoryCtrl.FindFirstValidPosition( item.Size, out var gridTile ) )
                 {
                     itemCtrl.RemoveTemporaryItem();
-                    inventoryCtrl.PutItemOnGrid( gridTile, item );
+                    inventoryCtrl.PutItemOnGrid( gridTile, item, inventoryCtrl.GridTileIsFree );
                 }
             }
 

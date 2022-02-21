@@ -12,8 +12,6 @@ namespace Code
 
         public override void InstallBindings()
         {
-            //Container.BindInterfacesAndSelfTo<LevelObjectsController>().AsSingle();
-
             Container.BindInstance( itemCtrl ).AsSingle();
             Container.BindInstance( inventoryCtrl ).AsSingle();
             Container.BindInstance( descriptionCtrl ).AsSingle();
