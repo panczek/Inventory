@@ -7,6 +7,7 @@ namespace Code.Gameplay
     public class PlayerController : MonoBehaviour
     {
         [SerializeField] private float speed;
+        [SerializeField] private float sprintSpeedMultiplier;
 
         [Inject] private InventoryController inventoryCtrl;
 
@@ -15,10 +16,14 @@ namespace Code.Gameplay
             if( Input.GetKeyDown( KeyCode.I ) )
                 inventoryCtrl.ToggleInventory();
 
+            var tempSpeed = speed;
+            if( Input.GetKey( KeyCode.LeftShift ) )
+                tempSpeed *= sprintSpeedMultiplier;
+            
             var moveVec = new Vector3( Input.GetAxis( "Horizontal" ), 0, Input.GetAxis( "Vertical" ) );
 
             if( moveVec.magnitude > 0f )
-                transform.position += moveVec * speed * Time.deltaTime;
+                transform.position += moveVec * tempSpeed * Time.deltaTime;
         }
 
         private void OnTriggerEnter( Collider other )
