@@ -115,8 +115,17 @@ namespace Code.UI
         {
             if( size.x == 1 && size.y == 1 )
             {
-                validTile = gridTiles.First( g => g.Value.IsFree ).Value;
-                return validTile != null;
+                foreach( var gridTIle in gridTiles )
+                {
+                    if( gridTIle.Value.IsFree )
+                    {
+                        validTile = gridTIle.Value;
+                        return true;
+                    }
+                }
+
+                validTile = null;
+                return false;
             }
 
             foreach( var tile in gridTiles.Where( g => g.Value.IsFree ) )

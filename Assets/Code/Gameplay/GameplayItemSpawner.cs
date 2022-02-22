@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Sirenix.OdinInspector;
+using System.Collections.Generic;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -7,7 +8,7 @@ namespace Code.Gameplay
     public class GameplayItemSpawner : MonoBehaviour
     {
         [SerializeField] private BoxCollider spawnZone;
-        [SerializeField] private float spawnTimer;
+        [SerializeField, SuffixLabel( "s" )] private float spawnTimer;
         [SerializeField] private List<GameObject> itemsToSpawn;
 
         private float timer;
