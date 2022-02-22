@@ -8,5 +8,3 @@ namespace Code.Gameplay
         [SerializeField] private float damage;
     }
 }
-
-

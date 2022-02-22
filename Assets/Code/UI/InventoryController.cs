@@ -18,6 +18,7 @@ namespace Code.UI
         [SerializeField] private float spawnSpacing;
         [SerializeField] private Vector2 gridTileSize;
         [SerializeField] private Vector2 gridImageSize;
+        [SerializeField] private GameObject debugItemSpawner;
 
         private Dictionary<int2, GridTile> gridTiles;
         private List<GridTile> currentlySelectedTiles;
@@ -27,20 +28,22 @@ namespace Code.UI
         public bool GridTileIsFree( GridTile tile ) => tile.IsFree;
         public bool GridTileDuringSelection( GridTile tile ) => tile.IsInSelection || currentlySelectedTiles.Contains( tile ) || tile.IsFree;
         public bool GridTIleIsInCurrentlySelected( GridTile tile ) => currentlySelectedTiles.Contains( tile );
-        
+
         [Inject]
         private void Inject( DiContainer container )
         {
             _container = container;
         }
-        
+
         private void Start()
         {
             CreateInventory();
             foreach( var tile in gridTiles.Values )
                 tile.ShowDebugs = false;
+
+            debugItemSpawner.SetActive( false );
         }
-        
+
         public Vector2 GetImagePos( int2 size )
         {
             Vector2 imagePos = Vector2.zero;
@@ -80,7 +83,12 @@ namespace Code.UI
             return imageSize;
         }
 
-        public bool PutItemOnGrid( GridTile tile, ItemData itemData, Func<GridTile, bool> tileCheck  )
+        public bool PutItemOnGrid( GridTile tile, ItemData itemData )
+        {
+            return PutItemOnGrid( tile, itemData, GridTileIsFree );
+        }
+
+        public bool PutItemOnGrid( GridTile tile, ItemData itemData, Func<GridTile, bool> tileCheck )
         {
             if( !WillFit( tile.MyPos, itemData.Size, out var possiblePositions, tileCheck ) )
                 return false;
@@ -93,7 +101,7 @@ namespace Code.UI
                 childTile.SetStateOccupiedChild( tile );
                 childTiles.Add( childTile );
             }
-            
+
             tile.SetStateOccupiedParent( itemData, childTiles );
             return true;
         }
@@ -102,7 +110,7 @@ namespace Code.UI
         {
             currentlySelectedTiles = newSelectedTiles;
         }
-        
+
         public bool FindFirstValidPosition( int2 size, out GridTile validTile )
         {
             if( size.x == 1 && size.y == 1 )
@@ -135,7 +143,7 @@ namespace Code.UI
 
             return tileList;
         }
-        
+
         public bool WillFit( int2 pos, int2 size, out List<int2> possiblePositions, Func<GridTile, bool> tileCheck, bool doChecks = true )
         {
             var wontFit = false;
@@ -148,7 +156,7 @@ namespace Code.UI
                 do
                 {
                     posToCheck = pos + new int2( x, y );
-                    if( IsValidTile( posToCheck ) && tileCheck(gridTiles[posToCheck]) )
+                    if( IsValidTile( posToCheck ) && tileCheck( gridTiles[posToCheck] ) )
                     {
                         x++;
                         possiblePositions.Add( posToCheck );
@@ -162,6 +170,7 @@ namespace Code.UI
                         wontFitNoChecks = true;
                         continue;
                     }
+
                     wontFit = true;
                     break;
                 } while( x < size.x && !wontFit );
@@ -169,7 +178,7 @@ namespace Code.UI
                 y++;
                 x = 0;
             } while( y < size.y && !wontFit );
-            
+
             return doChecks ? !wontFit : !wontFitNoChecks;
         }
 
@@ -179,8 +188,15 @@ namespace Code.UI
 
             foreach( var tile in gridTiles.Values )
                 tile.ShowDebugs = showDebugs;
+
+            debugItemSpawner.SetActive( showDebugs );
         }
-        
+
+        public void ToggleInventory()
+        {
+            inventory.SetActive( !inventory.activeInHierarchy );
+        }
+
         private void CreateInventory()
         {
             gridTiles = new Dictionary<int2, GridTile>();
@@ -205,7 +221,7 @@ namespace Code.UI
                 }
             }
         }
-        
+
         private bool IsValidTile( int2 pos )
         {
             return pos.x <= inventorySIze.x - 1 && pos.y <= inventorySIze.y - 1;

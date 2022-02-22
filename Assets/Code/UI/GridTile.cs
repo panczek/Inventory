@@ -250,7 +250,7 @@ namespace Code.UI
                 case ETileState.Free:
                     if( itemCtrl.CurrentItem != null )
                     {
-                        if( InventoryCtrl.PutItemOnGrid( this, itemCtrl.CurrentItem, InventoryCtrl.GridTileIsFree ) )
+                        if( InventoryCtrl.PutItemOnGrid( this, itemCtrl.CurrentItem) )
                             itemCtrl.RemoveTemporaryItem();
                     }
 
